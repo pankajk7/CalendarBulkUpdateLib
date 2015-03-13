@@ -334,6 +334,7 @@ public class CalendarView extends FrameLayout {
 	}
 
 	private boolean doSelectDate(Date date, WeekCellDescriptor cell) {
+		Log.d("DATE-RESHOTEL", date.toString());
 		Calendar newlySelectedCal = Calendar.getInstance(mLocale);
 		newlySelectedCal.setTime(date);
 		// Sanitize input: clear out the hours/minutes/seconds/millis.
@@ -395,7 +396,10 @@ public class CalendarView extends FrameLayout {
 
 				Calendar year = Calendar.getInstance();
 				int currentYear = year.get(Calendar.YEAR);
-				int currentMonth = year.get(Calendar.MONTH);
+				
+				//currentlyHighlighted scrolled month
+				int currentMonth = newlySelectedCal.get(Calendar.MONTH);
+						
 				if (getSelectionMode() != mSelectionModePrevious) {
 					getSelectedCells().clear();
 				}
