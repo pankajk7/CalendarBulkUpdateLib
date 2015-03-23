@@ -300,10 +300,17 @@ public class CalendarView extends FrameLayout {
 		return mSelectionMode;
 	}
 
-	public void setSelectionMode(SelectionMode selectionMode, String daySelection) {
+	public void setSelectionMode(SelectionMode selectionMode,
+			String daySelection) {
 		daySelectionString = daySelection;
 		if (mSelectionModePrevious != selectionMode
 				&& selectionMode == SelectionMode.WEEKEND) {
+			clearOldSelections();
+		}
+
+		if (mSelectionModePrevious != selectionMode
+				&& mSelectionModePrevious == SelectionMode.SINGLE
+				&& selectionMode == SelectionMode.MULTIPLE) {
 			clearOldSelections();
 		}
 
@@ -311,10 +318,10 @@ public class CalendarView extends FrameLayout {
 		mSelectionModePrevious = this.mSelectionMode;
 		if (selectionMode == SelectionMode.SINGLE
 				&& getSelectedCals().size() > 0) {
-//			WeekCellDescriptor cellDescriptor = getSelectedCells().get(0);
-//			Date selectedDate = getSelectedCals().get(0).getTime();
+			// WeekCellDescriptor cellDescriptor = getSelectedCells().get(0);
+			// Date selectedDate = getSelectedCals().get(0).getTime();
 			clearOldSelections();
-//			doSelectDate(selectedDate, cellDescriptor);
+			// doSelectDate(selectedDate, cellDescriptor);
 		} else if (mSelectionMode == RANGE) {
 			clearOldSelections();
 		}
@@ -396,32 +403,31 @@ public class CalendarView extends FrameLayout {
 
 				Calendar year = Calendar.getInstance();
 				int currentYear = year.get(Calendar.YEAR);
-				
-				//currentlyHighlighted scrolled month
-				int currentMonth = newlySelectedCal.get(Calendar.MONTH);
-						
+
+				// currentlyHighlighted scrolled month
+				int currentMonthHighlighted = newlySelectedCal
+						.get(Calendar.MONTH);
+
 				if (getSelectionMode() != mSelectionModePrevious) {
 					getSelectedCells().clear();
 				}
 
-//				boolean isContinue = true;
 				for (List<WeekCellDescriptor> week : mCells) {
 					for (WeekCellDescriptor singleCell : week) {
 						Calendar cal = Calendar.getInstance();
 						cal.setTime(singleCell.getDate());
 						if (cal.get(Calendar.YEAR) != currentYear) {
-							Log.d("***YEAR***", ""+cal.get(Calendar.YEAR));
+							Log.d("***YEAR***", "" + cal.get(Calendar.YEAR));
 							break;
 						}
-						if(daySelectionString.equalsIgnoreCase("month")){
+						if (daySelectionString.equalsIgnoreCase("month")) {
 							Log.d("***Month***", daySelectionString);
-							if (cal.get(Calendar.MONTH) != currentMonth) {
-								Log.d("Month", ""+cal.get(Calendar.MONTH));
-//								isContinue = false;
+							if (cal.get(Calendar.MONTH) != currentMonthHighlighted) {
+								Log.d("Month", "" + cal.get(Calendar.MONTH));
 								break;
 							}
 						}
-						
+
 						if (cal.get(Calendar.DAY_OF_WEEK) == dayOfWeek) {
 							if (singleCell.getDate().compareTo(start) > 0
 									|| singleCell.getDate().compareTo(start) == 0) {
@@ -433,14 +439,9 @@ public class CalendarView extends FrameLayout {
 							}
 						}
 					}
-//					if(isContinue == false){
-//						Log.d("isContinue", ""+isContinue);
-//						break;
-//					}
 				}
 			}
 
-			
 			if (mSelectionMode == RANGE && getSelectedCells().size() > 1) {
 				// Select all days in between start and end.
 				Date start = getSelectedCells().get(0).getDate();
@@ -1304,23 +1305,23 @@ public class CalendarView extends FrameLayout {
 		 */
 		public FluentInitializer withSelectedDates(
 				Collection<Date> selectedDates) {
-			if (mSelectionMode == SelectionMode.SINGLE
-					&& selectedDates.size() > 1) {
-				throw new IllegalArgumentException(
-						"SINGLE mode can't be used with multiple "
-								+ "selectedDates");
-			}
-			if (selectedDates != null) {
-				for (Date date : selectedDates) {
-					selectDate(date);
-					Calendar calendar = Calendar.getInstance();
-					calendar.setTime(date);
-					setMonthDisplayed(calendar);
-				}
-			}
+//			if (mSelectionMode == SelectionMode.SINGLE
+//					&& selectedDates.size() > 1) {
+//				throw new IllegalArgumentException(
+//						"SINGLE mode can't be used with multiple "
+//								+ "selectedDates");
+//			}
+//			if (selectedDates != null) {
+//				for (Date date : selectedDates) {
+//					selectDate(date);
+//					Calendar calendar = Calendar.getInstance();
+//					calendar.setTime(date);
+//					setMonthDisplayed(calendar);
+//				}
+//			}
 			scrollToSelectedDates();
 
-			validateAndUpdate();
+//			validateAndUpdate();
 			return this;
 		}
 
