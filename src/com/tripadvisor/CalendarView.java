@@ -49,8 +49,11 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+
+import com.tripadvisor.WeekCellDescriptor.RangeState;
 
 import static com.tripadvisor.CalendarView.SelectionMode.RANGE;
 import static com.tripadvisor.WeekCellDescriptor.RangeState.*;
@@ -189,8 +192,17 @@ public class CalendarView extends FrameLayout {
 	private OnInvalidDateSelectedListener mInvalidDateSelectedListener = new DefaultOnInvalidDateSelectedListener();
 
 	SelectionMode mSelectionMode = SelectionMode.SINGLE;
+	// PK=====
 	SelectionMode mSelectionModePrevious = SelectionMode.SINGLE;
 	String daySelectionString = "year";
+	// - Hashmap is for storing earliest date of dayOfWeek
+	// it have only 7 values for 7 days of week
+	HashMap<Integer, Date> dayOfWeekHashMap = new HashMap<Integer, Date>();
+	// Selecting all dates of dayOfWeeks to be selected if isInRange is false
+	// else if isInRange is true then select only a single date
+	boolean isInRange = true;
+
+	// ====
 
 	public CalendarView(Context context) {
 		this(context, null);
@@ -306,6 +318,7 @@ public class CalendarView extends FrameLayout {
 		if (mSelectionModePrevious != selectionMode
 				&& selectionMode == SelectionMode.WEEKEND) {
 			clearOldSelections();
+			dayOfWeekHashMap.clear();
 		}
 
 		if (mSelectionModePrevious != selectionMode
@@ -342,23 +355,35 @@ public class CalendarView extends FrameLayout {
 
 	private boolean doSelectDate(Date date, WeekCellDescriptor cell) {
 		Log.d("DATE-RESHOTEL", date.toString());
+		// pk- for dayOfWeek
+		boolean selectSingleDateOnly = false;
+		// ===
 		Calendar newlySelectedCal = Calendar.getInstance(mLocale);
 		newlySelectedCal.setTime(date);
 		// Sanitize input: clear out the hours/minutes/seconds/millis.
 		setMidnight(newlySelectedCal);
 
-		// Clear any remaining range state.
-		for (WeekCellDescriptor selectedCell : getSelectedCells()) {
-			selectedCell.setRangeState(NONE);
-		}
+		// // Clear any remaining range state.
+		// for (WeekCellDescriptor selectedCell : getSelectedCells()) {
+		// selectedCell.setRangeState(NONE);
+		// }
 
 		switch (mSelectionMode) {
 		case WEEKEND:
+
 			if (getSelectionMode() != mSelectionModePrevious) {
 				clearOldSelections();
 			}
+			// newlySelectedCal.get(Calendar.DAY_OF_WEEK) giving integer day of
+			// the week
+			selectSingleDateOnly = isDateInSelectionRange(date,
+					newlySelectedCal.get(Calendar.DAY_OF_WEEK));
 			break;
 		case RANGE:
+			// // Clear any remaining range state.
+			// for (WeekCellDescriptor selectedCell : getSelectedCells()) {
+			// selectedCell.setRangeState(NONE);
+			// }
 			if (getSelectedCals().size() > 1) {
 				// We've already got a range selected: clear the old one.
 				clearOldSelections();
@@ -371,6 +396,10 @@ public class CalendarView extends FrameLayout {
 			break;
 
 		case MULTIPLE:
+			// Clear any remaining range state.
+			for (WeekCellDescriptor selectedCell : getSelectedCells()) {
+				selectedCell.setRangeState(NONE);
+			}
 			date = applyMultiSelect(date, newlySelectedCal);
 			break;
 
@@ -383,20 +412,23 @@ public class CalendarView extends FrameLayout {
 		}
 
 		if (date != null) {
-			// Select a new cell.
-			if (getSelectedCells().size() == 0
-					|| !getSelectedCells().get(0).equals(cell)) {
-				getSelectedCells().add(cell);
-				cell.setSelected(true);
+			if (mSelectionMode != SelectionMode.WEEKEND) {
+				// Select a new cell.
+				if (getSelectedCells().size() == 0
+						|| !getSelectedCells().get(0).equals(cell)) {
+					getSelectedCells().add(cell);
+					cell.setSelected(true);
+				}
+				getSelectedCals().add(newlySelectedCal);
 			}
-			getSelectedCals().add(newlySelectedCal);
 
 			if (mSelectionMode == SelectionMode.WEEKEND) {
-				int size = getSelectedCells().size() - 1;
-				Date start = getSelectedCells().get(size).getDate();
+				// int size = getSelectedCells().size() - 1;
+				// Date startDate = getSelectedCells().get(size).getDate();
+				Date startDate = date;
 				Calendar startCalendar = Calendar.getInstance();
-				startCalendar.setTime(start);
-				int dayOfWeek = startCalendar.get(Calendar.DAY_OF_WEEK);
+				startCalendar.setTime(startDate);
+				int dayOfWeek = newlySelectedCal.get(Calendar.DAY_OF_WEEK);
 				Calendar endCalendar = Calendar.getInstance();
 				endCalendar.set(startCalendar.get(Calendar.YEAR),
 						Calendar.DECEMBER, 31);
@@ -412,32 +444,151 @@ public class CalendarView extends FrameLayout {
 					getSelectedCells().clear();
 				}
 
+				boolean isClickedOnSelectionRange = false;
+				// Log.d("***mCells***", mCells+"");
 				for (List<WeekCellDescriptor> week : mCells) {
 					for (WeekCellDescriptor singleCell : week) {
 						Calendar cal = Calendar.getInstance();
 						cal.setTime(singleCell.getDate());
+
+						// for a week if date 1 of a month is not at first
+						// column then
+						// get last singleCell of that week by getting last
+						// index of week by its size
+						Calendar calMonth = Calendar.getInstance();
+						calMonth.setTime(week.get(week.size() - 1).getDate());
+						// Log.d("***Week last index***",
+						// week.get(week.size()-1).getDate()+"");
 						if (cal.get(Calendar.YEAR) != currentYear) {
-							Log.d("***YEAR***", "" + cal.get(Calendar.YEAR));
+							// Log.d("***YEAR***", "" + cal.get(Calendar.YEAR));
 							break;
 						}
+
 						if (daySelectionString.equalsIgnoreCase("month")) {
-							Log.d("***Month***", daySelectionString);
-							if (cal.get(Calendar.MONTH) != currentMonthHighlighted) {
-								Log.d("Month", "" + cal.get(Calendar.MONTH));
+							// Log.d("***Month calMonth***",
+							// calMonth.get(Calendar.MONTH)+"");
+							// Log.d("***Month cal***",
+							// cal.get(Calendar.MONTH)+"");
+							if ((cal.get(Calendar.MONTH) != currentMonthHighlighted)
+									&& (calMonth.get(Calendar.MONTH) != currentMonthHighlighted)) {
+								// Log.d("Month", "" + cal.get(Calendar.MONTH));
 								break;
 							}
 						}
 
 						if (cal.get(Calendar.DAY_OF_WEEK) == dayOfWeek) {
-							if (singleCell.getDate().compareTo(start) > 0
-									|| singleCell.getDate().compareTo(start) == 0) {
-								if (!singleCell.isSelected()) {
-									singleCell.setSelected(true);
-									singleCell.setRangeState(MIDDLE);
-									getSelectedCells().add(singleCell);
+							// Log.d("**Date**", date + "");
+							// Log.d("**Start Date**", singleCell.getDate() +
+							// "");
+							if (singleCell.getDate().compareTo(date) > 0
+									|| singleCell.getDate().compareTo(date) == 0) {
+								int position = -1;
+								for (int i = 0; i < getSelectedCells().size(); i++) {
+									if (singleCell.getDate()
+											.compareTo(
+													getSelectedCells().get(i)
+															.getDate()) == 0) {
+										position = i;
+										break;
+									}
 								}
+								if (position >= 0) {
+									Log.d("**POSITIOn**", position + "");
+									Log.d("**Single cell Date**",
+											singleCell.getDate() + "");
+									Log.d("**Date**", date + "");
+									// Log.d("***getSelectedDates",
+									// getSelectedDates() + "");
+									if (singleCell.getDate().compareTo(date) == 0) {
+										// Log.d("**Clicked Selected date",
+										// date.toString());
+										if (singleCell.isSelected()
+												&& singleCell.getRangeState() != NONE) {
+											singleCell.setSelected(false);
+											singleCell.setRangeState(NONE);
+											Log.d("***Removing Cell",
+													getSelectedCells().get(
+															position).getDate()
+															+ "");
+											getSelectedCells().remove(position);
+
+											if (daySelectionString
+													.equalsIgnoreCase("month")) {
+												Calendar tempCalendar = Calendar
+														.getInstance();
+												tempCalendar.setTime(date);
+												int tempMonth = tempCalendar
+														.get(Calendar.MONTH);
+												dayOfWeek = changeToRelatedHashMap(
+														tempMonth, dayOfWeek);
+											}
+											Log.d("***Hasmap***",
+													dayOfWeekHashMap + "");
+											Log.d("***dayOfWeek***", dayOfWeek
+													+ "");
+											Log.d("***HashMap before removing",
+													dayOfWeekHashMap
+															.get(dayOfWeek)
+															+ "");
+											Log.d("***SingleDate***",
+													singleCell.getDate() + "");
+											Log.d("***map key date***",
+													dayOfWeekHashMap
+															.get(dayOfWeek)
+															+ "");
+											if (singleCell.getDate().compareTo(
+													dayOfWeekHashMap
+															.get(dayOfWeek)) == 0) {
+												dayOfWeekHashMap
+														.remove(dayOfWeek);
+											}
+											Log.d("***HashMap after removing",
+													dayOfWeekHashMap
+															.get(dayOfWeek)
+															+ "");
+										} else {
+											Log.d("**MODIFY CELL**",
+													singleCell.getDate() + "");
+											singleCell.setSelected(true);
+											singleCell.setRangeState(MIDDLE);
+											getSelectedCells().set(position,
+													singleCell);
+										}
+										isClickedOnSelectionRange = true;
+										break;
+									}
+
+								} else {
+
+									if (selectSingleDateOnly && isInRange) {
+										Log.d("**ADD CELL & inRange**",
+												singleCell.getDate() + "");
+										// this if block would only select the
+										// single date which have selected
+										singleCell.setSelected(true);
+										singleCell.setRangeState(MIDDLE);
+										getSelectedCells().add(singleCell);
+										isClickedOnSelectionRange = true;
+										break;
+									} else {
+										// this else block would select and add
+										// all dates of dayOfWeek
+										// from the selected date
+										Log.d("**ADD ALL CELL**",
+												singleCell.getDate() + "");
+										singleCell.setSelected(true);
+										singleCell.setRangeState(MIDDLE);
+										getSelectedCells().add(singleCell);
+									}
+								}
+								// }
+								// }
+								// }
 							}
 						}
+					}
+					if (isClickedOnSelectionRange) {
+						break;
 					}
 				}
 			}
@@ -485,6 +636,120 @@ public class CalendarView extends FrameLayout {
 		// Update the adapter.
 		validateAndUpdate();
 		return date != null;
+	}
+
+	// Pk - for checking whether to select only one cell or all cell
+	// of the dayOfWeek range
+	private boolean isDateInSelectionRange(Date date, int dayOfWeek) {
+		Log.d("***HashMap Size***", dayOfWeekHashMap.size() + "");
+		int tempDayOfWeek = dayOfWeek;
+		if (dayOfWeekHashMap.size() > 0) {
+			Log.d("***Hashmap***", dayOfWeekHashMap + "");
+			if (!daySelectionString.equalsIgnoreCase("month")) {
+				if (dayOfWeekHashMap.containsKey(dayOfWeek)) {
+					Date rangeDate = dayOfWeekHashMap.get(dayOfWeek);
+					Log.d("***RangeDate***", rangeDate + "");
+					/***
+					 * 1. check if date is greater i.e. after the rangeDate of
+					 * hashmap OR 2. if date is smaller i.e. earlier then the
+					 * rangeDate only possible when Range is there and its the
+					 * first dayOfWeek like 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16
+					 * 17 18 19 20 21 22 now if 14,21 are already selected and 7
+					 * is clicked to select then 2nd would be the condition
+					 ***/
+					// if (date.compareTo(rangeDate) > 0
+					// || isFirstDateOfDayOfWeekRange(date, rangeDate)) {
+					// if (date.compareTo(rangeDate) > 0
+					// || date.compareTo(rangeDate) < 0) {
+					if (date.compareTo(rangeDate) > 0) {
+						isInRange = true;
+						return true;
+					}
+				}
+			} else {
+				for (int i = 0; i < 12; i++) {
+					Log.d("***TempDayOfWeek***", tempDayOfWeek + "");
+					dayOfWeek = changeToRelatedHashMap(i, tempDayOfWeek);
+					if (!dayOfWeekHashMap.containsKey(dayOfWeek)) {
+						Log.d("***!map contians key***", dayOfWeek + " : " + i);
+						continue;
+					}
+					Date rangeDate = dayOfWeekHashMap.get(dayOfWeek);
+
+					Calendar calendarForRangeDate = Calendar.getInstance();
+					calendarForRangeDate.setTime(rangeDate);
+					Calendar calendarForCurrentDate = Calendar.getInstance();
+					calendarForCurrentDate.setTime(date);
+
+					int firstIndexDayOfWeek = calendarForRangeDate
+							.get(Calendar.MONTH);
+					int currentSelectedMonth = calendarForCurrentDate
+							.get(Calendar.MONTH);
+
+					firstIndexDayOfWeek = changeToRelatedHashMap(
+							firstIndexDayOfWeek, dayOfWeek);
+					currentSelectedMonth = changeToRelatedHashMap(
+							currentSelectedMonth, dayOfWeek);
+
+					if (firstIndexDayOfWeek == currentSelectedMonth) {
+						if (date.compareTo(rangeDate) > 0) {
+							isInRange = true;
+							return true;
+						}
+						break;
+					} else {
+						rangeDate = dayOfWeekHashMap.get(currentSelectedMonth);
+						if (rangeDate != null) {
+							if (date.compareTo(rangeDate) > 0) {
+								isInRange = true;
+								return true;
+							}
+							break;
+						}
+					}
+				}
+			}
+		}
+
+		if (daySelectionString.equalsIgnoreCase("month")) {
+
+			Calendar calendarForCurrentDate = Calendar.getInstance();
+			calendarForCurrentDate.setTime(date);
+			int currentSelectedMonth = calendarForCurrentDate
+					.get(Calendar.MONTH);
+			currentSelectedMonth = changeToRelatedHashMap(currentSelectedMonth,
+					tempDayOfWeek);
+			Log.d("**ADDING HASHP MAP tempDayOfWeek***", tempDayOfWeek + "");
+			Log.d("**ADDING HASHP MAP currentselected month***",
+					currentSelectedMonth + "");
+			dayOfWeekHashMap.put(currentSelectedMonth, date);
+			isInRange = false;
+		} else {
+			dayOfWeekHashMap.put(dayOfWeek, date);
+			isInRange = false;
+		}
+		return false;
+	}
+
+	// Pk this method give like eg: month 4 dayOfWeek 2 then result is 402
+	// because there are 12 months so cant multiple with 10
+	private int changeToRelatedHashMap(int month, int dayOfWeek) {
+		return (dayOfWeek * 100) + month;
+	}
+
+	// Pk
+	private boolean isFirstDateOfDayOfWeekRange(Date date, Date rangeDate) {
+		if (date.compareTo(rangeDate) < 0) {
+			// check if the next dayOfWeek of same range is selected or not
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(date);
+			cal.add(Calendar.DAY_OF_MONTH, 7);
+			date = cal.getTime();
+			if (date.compareTo(rangeDate) == 0) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private void clearOldSelections() {
@@ -1305,23 +1570,23 @@ public class CalendarView extends FrameLayout {
 		 */
 		public FluentInitializer withSelectedDates(
 				Collection<Date> selectedDates) {
-//			if (mSelectionMode == SelectionMode.SINGLE
-//					&& selectedDates.size() > 1) {
-//				throw new IllegalArgumentException(
-//						"SINGLE mode can't be used with multiple "
-//								+ "selectedDates");
-//			}
-//			if (selectedDates != null) {
-//				for (Date date : selectedDates) {
-//					selectDate(date);
-//					Calendar calendar = Calendar.getInstance();
-//					calendar.setTime(date);
-//					setMonthDisplayed(calendar);
-//				}
-//			}
+			// if (mSelectionMode == SelectionMode.SINGLE
+			// && selectedDates.size() > 1) {
+			// throw new IllegalArgumentException(
+			// "SINGLE mode can't be used with multiple "
+			// + "selectedDates");
+			// }
+			// if (selectedDates != null) {
+			// for (Date date : selectedDates) {
+			// selectDate(date);
+			// Calendar calendar = Calendar.getInstance();
+			// calendar.setTime(date);
+			// setMonthDisplayed(calendar);
+			// }
+			// }
 			scrollToSelectedDates();
 
-//			validateAndUpdate();
+			// validateAndUpdate();
 			return this;
 		}
 
