@@ -335,6 +335,8 @@ public class CalendarView extends FrameLayout {
 			// Date selectedDate = getSelectedCals().get(0).getTime();
 			clearOldSelections();
 			// doSelectDate(selectedDate, cellDescriptor);
+		} else if (selectionMode == SelectionMode.SINGLE){
+			clearOldSelections();
 		} else if (mSelectionMode == RANGE) {
 			clearOldSelections();
 		}
@@ -595,6 +597,7 @@ public class CalendarView extends FrameLayout {
 
 			if (mSelectionMode == RANGE && getSelectedCells().size() > 1) {
 				// Select all days in between start and end.
+				Log.d("***SELECTED-DATES>1***", getSelectedCells().toString());
 				Date start = getSelectedCells().get(0).getDate();
 				Date end = getSelectedCells().get(1).getDate();
 				getSelectedCells().get(0).setRangeState(FIRST);
@@ -620,6 +623,7 @@ public class CalendarView extends FrameLayout {
 					|| mSelectionMode == RANGE
 					&& getSelectedCells().size() == 1
 					&& getSelectedCells().get(0).getRangeState() == NONE) {
+				Log.d("***SELECTED-DATES OPEN***", getSelectedCells().toString());
 				getSelectedCells().get(0).setRangeState(OPEN);
 			} else if (mSelectionMode == RANGE
 					&& getSelectedCells().size() == 1
@@ -630,6 +634,7 @@ public class CalendarView extends FrameLayout {
 					|| mSelectionMode == RANGE
 					&& getSelectedCells().size() == 1
 					&& getSelectedCells().get(0).getRangeState() == OPEN) {
+				Log.d("***SELECTED-DATES FNL***", getSelectedCells().toString());
 				getSelectedCells().get(0).setRangeState(FIRST_AND_LAST);
 			}
 		}
@@ -752,7 +757,7 @@ public class CalendarView extends FrameLayout {
 		return false;
 	}
 
-	private void clearOldSelections() {
+	public void clearOldSelections() {
 		for (WeekCellDescriptor selectedCell : getSelectedCells()) {
 			// De-select the currently-selected cell.
 			selectedCell.setSelected(false);
@@ -782,7 +787,7 @@ public class CalendarView extends FrameLayout {
 		return date;
 	}
 
-	private void validateAndUpdate() {
+	public void validateAndUpdate() {
 		if (mAdapter == null) {
 			setUpAdapter();
 		} else {
