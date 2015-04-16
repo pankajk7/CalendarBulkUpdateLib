@@ -40,6 +40,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.security.acl.LastOwnerException;
 import java.text.DateFormat;
 import java.text.DateFormatSymbols;
 import java.text.SimpleDateFormat;
@@ -317,14 +318,14 @@ public class CalendarView extends FrameLayout {
 		daySelectionString = daySelection;
 		if (mSelectionModePrevious != selectionMode
 				&& selectionMode == SelectionMode.WEEKEND) {
-			clearOldSelections();
-			dayOfWeekHashMap.clear();
+			// clearOldSelections();
+			// dayOfWeekHashMap.clear();
 		}
 
 		if (mSelectionModePrevious != selectionMode
 				&& mSelectionModePrevious == SelectionMode.SINGLE
 				&& selectionMode == SelectionMode.MULTIPLE) {
-			clearOldSelections();
+			// clearOldSelections();
 		}
 
 		this.mSelectionMode = selectionMode;
@@ -335,10 +336,10 @@ public class CalendarView extends FrameLayout {
 			// Date selectedDate = getSelectedCals().get(0).getTime();
 			clearOldSelections();
 			// doSelectDate(selectedDate, cellDescriptor);
-		} else if (selectionMode == SelectionMode.SINGLE){
+		} else if (selectionMode == SelectionMode.SINGLE) {
 			clearOldSelections();
 		} else if (mSelectionMode == RANGE) {
-			clearOldSelections();
+			// clearOldSelections();
 		}
 		validateAndUpdate();
 	}
@@ -373,9 +374,9 @@ public class CalendarView extends FrameLayout {
 		switch (mSelectionMode) {
 		case WEEKEND:
 
-			if (getSelectionMode() != mSelectionModePrevious) {
-				clearOldSelections();
-			}
+			// if (getSelectionMode() != mSelectionModePrevious) {
+			// clearOldSelections();
+			// }
 			// newlySelectedCal.get(Calendar.DAY_OF_WEEK) giving integer day of
 			// the week
 			selectSingleDateOnly = isDateInSelectionRange(date,
@@ -388,12 +389,12 @@ public class CalendarView extends FrameLayout {
 			// }
 			if (getSelectedCals().size() > 1) {
 				// We've already got a range selected: clear the old one.
-				clearOldSelections();
+				// clearOldSelections();
 			} else if (getSelectedCals().size() == 1
 					&& newlySelectedCal.before(getSelectedCals().get(0))) {
 				// We're moving the start of the range back in time: clear the
 				// old start date.
-				clearOldSelections();
+				// clearOldSelections();
 			}
 			break;
 
@@ -495,10 +496,10 @@ public class CalendarView extends FrameLayout {
 									}
 								}
 								if (position >= 0) {
-									Log.d("**POSITIOn**", position + "");
-									Log.d("**Single cell Date**",
-											singleCell.getDate() + "");
-									Log.d("**Date**", date + "");
+									// Log.d("**POSITIOn**", position + "");
+									// Log.d("**Single cell Date**",
+									// singleCell.getDate() + "");
+									// Log.d("**Date**", date + "");
 									// Log.d("***getSelectedDates",
 									// getSelectedDates() + "");
 									if (singleCell.getDate().compareTo(date) == 0) {
@@ -524,20 +525,21 @@ public class CalendarView extends FrameLayout {
 												dayOfWeek = changeToRelatedHashMap(
 														tempMonth, dayOfWeek);
 											}
-											Log.d("***Hasmap***",
-													dayOfWeekHashMap + "");
-											Log.d("***dayOfWeek***", dayOfWeek
-													+ "");
-											Log.d("***HashMap before removing",
-													dayOfWeekHashMap
-															.get(dayOfWeek)
-															+ "");
-											Log.d("***SingleDate***",
-													singleCell.getDate() + "");
-											Log.d("***map key date***",
-													dayOfWeekHashMap
-															.get(dayOfWeek)
-															+ "");
+											// Log.d("***Hasmap***",
+											// dayOfWeekHashMap + "");
+											// Log.d("***dayOfWeek***",
+											// dayOfWeek
+											// + "");
+											// Log.d("***HashMap before removing",
+											// dayOfWeekHashMap
+											// .get(dayOfWeek)
+											// + "");
+											// Log.d("***SingleDate***",
+											// singleCell.getDate() + "");
+											// Log.d("***map key date***",
+											// dayOfWeekHashMap
+											// .get(dayOfWeek)
+											// + "");
 											if (singleCell.getDate().compareTo(
 													dayOfWeekHashMap
 															.get(dayOfWeek)) == 0) {
@@ -598,19 +600,77 @@ public class CalendarView extends FrameLayout {
 			if (mSelectionMode == RANGE && getSelectedCells().size() > 1) {
 				// Select all days in between start and end.
 				Log.d("***SELECTED-DATES>1***", getSelectedCells().toString());
-				Date start = getSelectedCells().get(0).getDate();
-				Date end = getSelectedCells().get(1).getDate();
-				getSelectedCells().get(0).setRangeState(FIRST);
-				getSelectedCells().get(1).setRangeState(LAST);
+				/*** EDITED ***/
+				int size = getSelectedCells().size();
+				int calsize = getSelectedCals().size();
+				Date start = getSelectedCells().get(size - 2).getDate();
+				Date end = getSelectedCells().get(size - 1).getDate();
 
-				for (List<WeekCellDescriptor> week : mCells) {
-					for (WeekCellDescriptor singleCell : week) {
-						if (singleCell.getDate().after(start)
-								&& singleCell.getDate().before(end)
-								&& singleCell.isSelectable()) {
-							singleCell.setSelected(true);
-							singleCell.setRangeState(MIDDLE);
-							getSelectedCells().add(singleCell);
+				if (start.after(end)
+						&& getSelectedCells().get(size - 2).getRangeState() == FIRST) {
+					Log.d("*** start & end ***",
+							start.toString() + " - " + end.toString());
+					getSelectedCells().get(size - 1).setRangeState(NONE);
+					getSelectedCells().get(size - 1).setSelected(false);
+					getSelectedCells().remove(size - 1);
+					// int tempSize = getSelectedCells().size();
+					// getSelectedCells().remove(tempSize - 1);
+				} else {
+					Log.d("*** start & end 2***", start.toString() + " - "
+							+ end.toString());
+					if (getSelectedCells().get(size - 2).getRangeState() == MIDDLE
+							&& getSelectedCells().get(size - 1).getRangeState() != MIDDLE) {
+						/***
+						 * if 2nd last element range is MIDDLE because first and
+						 * last range state would be 0th and 1st index element
+						 * so then the last element is new one so set range of
+						 * last element as open
+						 ***/
+						if (getSelectedCells().get(size - 1).getRangeState() != FIRST
+								|| getSelectedCells().get(size - 1)
+										.getRangeState() != LAST) {
+							getSelectedCells().get(size - 1).setRangeState(
+									FIRST);
+							Log.d("***FIRST***", getSelectedCells() + "");
+						}else{
+							getSelectedCells().remove(size-1);
+							Log.d("***Duplicate FIRST deleted***", getSelectedCells() + "");
+						}
+					} else if ((getSelectedCells().get(size - 2).getRangeState() == FIRST
+							&& getSelectedCals().get(calsize - 2).compareTo(
+									newlySelectedCal) != 0)
+							&& (getSelectedCells().get(size - 1).getRangeState() == MIDDLE
+							|| getSelectedCells().get(size - 1).getRangeState() == FIRST
+							|| getSelectedCells().get(size - 1).getRangeState() == LAST)) {
+						getSelectedCells().remove(size - 1);
+						Log.d("*** Cell Removed***", getSelectedCells() + "");
+					} else if ((getSelectedCells().get(size - 2).getRangeState() == FIRST
+							&& getSelectedCals().get(calsize - 2).compareTo(
+									newlySelectedCal) != 0)
+							&& (getSelectedCells().get(size - 1).getRangeState() != MIDDLE
+							|| getSelectedCells().get(size - 1).getRangeState() != FIRST
+							|| getSelectedCells().get(size - 1).getRangeState() != LAST)) {
+						Log.d("*** Adding Range***", "creating range");
+						getSelectedCells().get(size - 2).setRangeState(FIRST);
+						getSelectedCells().get(size - 1).setRangeState(LAST);
+						/*** end ***/
+						for (List<WeekCellDescriptor> week : mCells) {
+							for (WeekCellDescriptor singleCell : week) {
+								if (singleCell.getDate().after(start)
+										&& singleCell.getDate().before(end)
+										&& singleCell.isSelectable()) {
+									if (!singleCell.isSelected()) {
+										singleCell.setSelected(true);
+										singleCell.setRangeState(MIDDLE);
+										getSelectedCells().add(singleCell);
+									} else if (singleCell.getRangeState() == FIRST_AND_LAST) {
+										getSelectedCells().remove(singleCell);
+										singleCell.setSelected(true);
+										singleCell.setRangeState(MIDDLE);
+										getSelectedCells().add(singleCell);
+									}
+								}
+							}
 						}
 					}
 				}
@@ -623,20 +683,22 @@ public class CalendarView extends FrameLayout {
 					|| mSelectionMode == RANGE
 					&& getSelectedCells().size() == 1
 					&& getSelectedCells().get(0).getRangeState() == NONE) {
-				Log.d("***SELECTED-DATES OPEN***", getSelectedCells().toString());
-				getSelectedCells().get(0).setRangeState(OPEN);
-			} else if (mSelectionMode == RANGE
-					&& getSelectedCells().size() == 1
-					&& getSelectedCells().get(0).getRangeState() == OPEN
-					|| mSelectionMode == RANGE
-					&& getSelectedCells().size() == 1
-					&& getSelectedCals().get(0).compareTo(newlySelectedCal) == 0
-					|| mSelectionMode == RANGE
-					&& getSelectedCells().size() == 1
-					&& getSelectedCells().get(0).getRangeState() == OPEN) {
-				Log.d("***SELECTED-DATES FNL***", getSelectedCells().toString());
-				getSelectedCells().get(0).setRangeState(FIRST_AND_LAST);
+				Log.d("***SELECTED-DATES OPEN***", getSelectedCells()
+						.toString());
+				getSelectedCells().get(0).setRangeState(FIRST);
 			}
+			// else if (mSelectionMode == RANGE
+			// && getSelectedCells().size() == 1
+			// && getSelectedCells().get(0).getRangeState() == OPEN
+			// || mSelectionMode == RANGE
+			// && getSelectedCells().size() == 1
+			// && getSelectedCals().get(0).compareTo(newlySelectedCal) == 0
+			// || mSelectionMode == RANGE
+			// && getSelectedCells().size() == 1
+			// && getSelectedCells().get(0).getRangeState() == OPEN) {
+			// Log.d("***SELECTED-DATES FNL***", getSelectedCells().toString());
+			// getSelectedCells().get(0).setRangeState(FIRST_AND_LAST);
+			// }
 		}
 		// Update the adapter.
 		validateAndUpdate();
