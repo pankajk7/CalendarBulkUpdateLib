@@ -610,9 +610,15 @@ public class CalendarView extends FrameLayout {
 						&& getSelectedCells().get(size - 2).getRangeState() == FIRST) {
 					Log.d("*** start & end ***",
 							start.toString() + " - " + end.toString());
-					getSelectedCells().get(size - 1).setRangeState(NONE);
-					getSelectedCells().get(size - 1).setSelected(false);
-					getSelectedCells().remove(size - 1);
+					if (getSelectedCells().get(size - 1).getRangeState() != MIDDLE 
+							&&getSelectedCells().get(size - 1).getRangeState() != FIRST
+							&&getSelectedCells().get(size - 1).getRangeState() != LAST) {
+						getSelectedCells().get(size - 1).setRangeState(NONE);
+						getSelectedCells().get(size - 1).setSelected(false);
+						getSelectedCells().remove(size - 1);
+					}else{
+						getSelectedCells().remove(size-1);
+					}
 					// int tempSize = getSelectedCells().size();
 					// getSelectedCells().remove(tempSize - 1);
 				} else {
@@ -626,30 +632,36 @@ public class CalendarView extends FrameLayout {
 						 * so then the last element is new one so set range of
 						 * last element as open
 						 ***/
+						Log.d("***Middle***", "2isMiddle&1isnotMiddle");
 						if (getSelectedCells().get(size - 1).getRangeState() != FIRST
 								|| getSelectedCells().get(size - 1)
 										.getRangeState() != LAST) {
 							getSelectedCells().get(size - 1).setRangeState(
 									FIRST);
 							Log.d("***FIRST***", getSelectedCells() + "");
-						}else{
-							getSelectedCells().remove(size-1);
-							Log.d("***Duplicate FIRST deleted***", getSelectedCells() + "");
+						} else {
+							getSelectedCells().remove(size - 1);
+							Log.d("***Duplicate FIRST deleted***",
+									getSelectedCells() + "");
 						}
-					} else if ((getSelectedCells().get(size - 2).getRangeState() == FIRST
-							&& getSelectedCals().get(calsize - 2).compareTo(
-									newlySelectedCal) != 0)
-							&& (getSelectedCells().get(size - 1).getRangeState() == MIDDLE
-							|| getSelectedCells().get(size - 1).getRangeState() == FIRST
-							|| getSelectedCells().get(size - 1).getRangeState() == LAST)) {
+					} else if ((getSelectedCells().get(size - 2)
+							.getRangeState() == FIRST && getSelectedCals().get(
+							calsize - 2).compareTo(newlySelectedCal) != 0)
+							&& (getSelectedCells().get(size - 1)
+									.getRangeState() == MIDDLE
+									|| getSelectedCells().get(size - 1)
+											.getRangeState() == FIRST || getSelectedCells()
+									.get(size - 1).getRangeState() == LAST)) {
 						getSelectedCells().remove(size - 1);
 						Log.d("*** Cell Removed***", getSelectedCells() + "");
-					} else if ((getSelectedCells().get(size - 2).getRangeState() == FIRST
-							&& getSelectedCals().get(calsize - 2).compareTo(
-									newlySelectedCal) != 0)
-							&& (getSelectedCells().get(size - 1).getRangeState() != MIDDLE
-							|| getSelectedCells().get(size - 1).getRangeState() != FIRST
-							|| getSelectedCells().get(size - 1).getRangeState() != LAST)) {
+					} else if ((getSelectedCells().get(size - 2)
+							.getRangeState() == FIRST && getSelectedCals().get(
+							calsize - 2).compareTo(newlySelectedCal) != 0)
+							&& (getSelectedCells().get(size - 1)
+									.getRangeState() != MIDDLE
+									|| getSelectedCells().get(size - 1)
+											.getRangeState() != FIRST || getSelectedCells()
+									.get(size - 1).getRangeState() != LAST)) {
 						Log.d("*** Adding Range***", "creating range");
 						getSelectedCells().get(size - 2).setRangeState(FIRST);
 						getSelectedCells().get(size - 1).setRangeState(LAST);
@@ -672,6 +684,11 @@ public class CalendarView extends FrameLayout {
 								}
 							}
 						}
+					} else if (getSelectedCells().get(size - 2).getRangeState() == NONE
+							&& getSelectedCells().get(size - 2).isSelected() == true) {
+						Log.d("***selectionMode Changed***",
+								"mode Changed to range.");
+						getSelectedCells().get(size - 1).setRangeState(FIRST);
 					}
 				}
 			} else if (mSelectionMode == RANGE
