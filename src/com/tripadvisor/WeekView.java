@@ -5,23 +5,14 @@ import android.graphics.Typeface;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
-
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
-
 import static android.view.View.MeasureSpec.EXACTLY;
 import static android.view.View.MeasureSpec.makeMeasureSpec;
 import static android.view.View.OnClickListener;
 
-/**
- * <p> This is a dynamic view for drawing a single week. It can be configured to display the week
- * number, start the week on a given day, or show a reduced number of days. It is intended for use
- * as a single view within a ListView. See {@link com.tripadvisor.CalendarView
- * .WeeksAdapter}
- * for usage. </p>
- */
 public class WeekView extends ViewGroup implements OnClickListener {
 
     Listener mListener;
